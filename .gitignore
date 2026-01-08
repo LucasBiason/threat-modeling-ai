@@ -74,3 +74,6 @@ Thumbs.db
 # Documentação de rascunho (não versionar)
 Documentacao/
 
+# Scripts temporários (devem ficar em @temp dos agentes)
+scripts/
+
