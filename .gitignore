@@ -25,6 +25,7 @@ wheels/
 venv/
 env/
 ENV/
+**/venv/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -88,4 +89,3 @@ tmp/
 # LLM cache (SQLite) - Redis será o cache final em produção
 .langchain_cache.db
 *.cache.db
-
