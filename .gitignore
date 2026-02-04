@@ -54,13 +54,14 @@ model/runs/
 *.log
 logs/
 
-# Environment
+# Environment (NUNCA commitar chaves)
 .env
 .env.local
-**/.env
+.env.*
+!.env.example
+notebooks/.env
 configs/.env
 configs/.env.local
-notebooks/.env
 
 # IDE
 .vscode/
@@ -69,15 +70,15 @@ notebooks/.env
 *.swo
 *~
 
+# Node
+node_modules/
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Streamlit
 .streamlit/
-
-# Node (frontend)
-node_modules/
 
 # Temporary files
 *.tmp

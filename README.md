@@ -1,146 +1,106 @@
-# ArchThreat Analyzer
+# Threat Modeling AI - Modelagem de Ameaças Automatizada
 
-**Sistema de Modelagem de Ameaças com IA baseado em STRIDE**
+**Desafio Técnico:** Sistema de modelagem de ameaças automatizada usando Computer Vision, Graph Theory e STRIDE/DREAD.
 
-Projeto desenvolvido para o Hackathon FIAP - Fase 5 (Tech Challenger).
+**Notion (Estudos):** O card deste projeto está no database Studies. Atualizações via script `notion-automation-suite/scripts/update_study_cards_ml_spam_and_threat_modeling.py` (busca por título "Threat Modeling AI") ou `Trabalho/Astracode/Scripts/atualizar_cards_projetos_finalizados_notion.py`. Documentação completa do contexto (para o card e referência): `docs/CONTEXTO_PROJETO_NOTION.md`.
 
-## 📋 Sobre o Projeto
+## Visão Geral
 
-O **ArchThreat Analyzer** é um sistema de Inteligência Artificial que realiza automaticamente a modelagem de ameaças baseada na metodologia STRIDE, a partir de diagramas de arquitetura de software em imagem.
+Este projeto implementa um sistema completo de análise de ameaças em diagramas de arquitetura usando:
+- **YOLO** para detecção de componentes
+- **OpenCV** para detecção de boundaries e conexões
+- **NetworkX** para construção de grafo arquitetural
+- **STRIDE** para análise de ameaças
+- **DREAD** para priorização de riscos
 
-### Funcionalidades Principais
+## Escopo atual
 
-- 📤 Upload e processamento de imagens de diagramas de arquitetura
-- 🔍 Identificação automática de componentes arquiteturais
-- 🛡️ Análise STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege)
-- 📊 Geração de relatórios estruturados de ameaças
-- 📥 Exportação de relatórios em múltiplos formatos (PDF, JSON, CSV)
-- 📚 Histórico de análises realizadas
+- **Agora:** apenas **dataset real** (ex.: Roboflow AWS/Azure System Diagrams) e **treinamento** do modelo YOLO.
+- **Diagramas sintéticos** (geração para testes): isolados para **outro momento**.
+- **Diagramas reais** (captados na internet): no futuro, pasta específica → passar numa **LLM** para insights → usar o **relatório** como base para avaliar o quanto o projeto se aproxima do correto. Ver `rascunho/Documentacao/DIAGRAMAS_SINTETICOS_E_REAIS.md`.
 
-## 🏗 Arquitetura
-
-```
-┌─────────────────┐
-│   Frontend      │
-│   (React)       │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   Backend API   │
-│   (FastAPI)     │
-└────────┬────────┘
-    ┌────┴────┐
-    │        │
-┌───▼───┐ ┌──▼────┐
-│  LLM  │ │  DB   │
-│  API  │ │(Postgres)│
-└───────┘ └────────┘
-```
-
-## 🛠 Stack Tecnológica
-
-### Backend
-- **FastAPI** (Python 3.11+)
-- **PostgreSQL 15+**
-- **OpenAI GPT-4 Vision** / **Claude 3.5 Sonnet**
-- **Pillow** (processamento de imagens)
-- **Pydantic v2** (validação)
-- **pytest** (testes)
-
-### Frontend
-- **React 18** com **TypeScript**
-- **Vite** (build tool)
-- **TailwindCSS** (estilização)
-- **React Query** (gerenciamento de estado)
-- **Axios** (requisições HTTP)
-
-### Infraestrutura
-- **Docker** e **Docker Compose**
-- **Nginx** (servidor web)
-
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 threat-modeling-ai/
-├── arch-threat-backend/     # API FastAPI
-├── arch-threat-frontend/    # Aplicação React
-├── notebooks/               # Jupyter notebooks para análise
-├── docs/                    # Documentação técnica
-├── scripts/                 # Scripts utilitários
-└── Documentacao/            # Documentação do projeto (não versionado)
+├── notebooks/              # Notebooks (análise base, treino, detecção)
+├── dataset/                # Dataset (real: train/val/test ou export Roboflow)
+├── model/                  # Treinamento e inferência YOLO
+├── vision/                 # Detecção de boundaries e conexões
+├── graph/                  # Construção de grafo arquitetural
+├── stride_engine/          # Engine STRIDE e DREAD
+├── Documentacao/           # Docs (datasets, diagramas sintéticos/reais)
+├── rascunho/               # Código e docs em migração para a raiz
+└── ...
 ```
 
-## 🚀 Início Rápido
+## Como Usar
 
-### Pré-requisitos
+### 1. Setup completo (ambiente + dataset)
 
-- Docker e Docker Compose
-- Python 3.11+ (para desenvolvimento local)
-- Node.js 20+ (para desenvolvimento frontend)
-
-### Instalação
+Na raiz do projeto:
 
 ```bash
-# Clone o repositório
-git clone <repository-url>
-cd threat-modeling-ai
-
-# Configure as variáveis de ambiente
-cp .env.example .env
-# Edite .env com suas configurações
-
-# Inicie os serviços
-docker compose up -d
+make setup-notebooks
 ```
 
-### Desenvolvimento
+Isso executa:
+1. **scripts/setup_venv_kernel.sh** – cria `.venv`, instala dependências e registra o kernel Jupyter **"Python (threat-modeling-ai)"**.
+2. **scripts/download_dataset.py** – baixa o dataset AWS and Azure System Diagrams (Roboflow) em formato YOLOv8 para `dataset/` na raiz (requer `configs/.env` com `ROBOFLOW_API_KEY`).
+
+### 2. Apenas ambiente (.venv + kernel)
 
 ```bash
-# Backend
-cd arch-threat-backend
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
-pip install -r requirements-dev.txt
-uvicorn app.main:app --reload
-
-# Frontend
-cd arch-threat-frontend
-npm install
-npm run dev
+make setup-venv
+# ou
+./scripts/setup_venv_kernel.sh
 ```
 
-## 📚 Documentação
+Ative com: `source .venv/bin/activate`. No Jupyter/Lab, selecione o kernel **"Python (threat-modeling-ai)"**.
 
-- [Documentação Técnica](Documentacao/DOCUMENTACAO_TECNICA.md)
-- [Planejamento de Etapas](Documentacao/PLANEJAMENTO_ETAPAS.md)
-- [API Documentation](docs/API.md) (em construção)
-
-## 🧪 Testes
+### 3. Apenas download do dataset
 
 ```bash
-# Backend
-cd arch-threat-backend
-pytest
-
-# Com cobertura
-pytest --cov=app --cov-report=html
+make download-dataset
+# ou (com .venv ativo)
+python scripts/download_dataset.py
 ```
 
-## 📅 Cronograma
+Requer `configs/.env` com `ROBOFLOW_API_KEY`. O dataset vai para **`dataset/`** na raiz do projeto (uma única pasta).
 
-- **Início:** 13/01/2026
-- **Entrega:** 20/02/2026
-- **Duração:** 5 semanas + 1 semana de buffer
+### 4. Treinar o modelo YOLO
 
-## 📝 Licença
+O **treino é feito no notebook** (passo a passo didático). Abra `notebooks/00-analise-base-treino-componentes.ipynb` e execute as células na ordem; o **Passo 4** contém o treino (usa `dataset/data.yaml` e salva pesos em `runs/detect/train/weights/best.pt`). Os scripts na raiz são apenas para **download** e **validação** do dataset.
 
-Este projeto foi desenvolvido para o Hackathon FIAP - Fase 5.
+### 6. Executar Pipeline Completo
 
-## 👤 Autor
+Quando migrarmos o código para a raiz:
 
-Lucas Biason
+```bash
+python main.py --input diagram.png
+```
+
+Por enquanto o pipeline está em `rascunho/main.py`.
+
+## Notebooks (por etapas)
+
+- **`notebooks/00-analise-base-treino-componentes.ipynb`** – Análise da base de treino e **imagem → detecção de componentes e ligações** (componentes e conexões).
+- **`rascunho/notebooks/`** – Notebooks de referência (dataset sintético, YOLO, STRIDE, DREAD, pipeline) em `rascunho/`.
+
+## Tecnologias
+
+- Python 3.10+
+- YOLOv8 (Ultralytics)
+- OpenCV
+- NetworkX
+- Streamlit
+- OWASP pytm
+
+## Licença
+
+MIT
 
 ---
 
-**Status do Projeto:** 🚧 Em Desenvolvimento
+*Modelagem de ameaças automatizada em diagramas de arquitetura.*
 
