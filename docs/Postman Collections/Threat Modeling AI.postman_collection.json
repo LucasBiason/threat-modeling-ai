@@ -1,0 +1,90 @@
+{
+  "info": {
+    "name": "Threat Modeling AI",
+    "description": "API para análise de diagramas de arquitetura com STRIDE/DREAD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "GET Health Ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/ready",
+              "host": ["{{base_url}}"],
+              "path": ["health", "ready"]
+            }
+          }
+        },
+        {
+          "name": "GET Health Live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/live",
+              "host": ["{{base_url}}"],
+              "path": ["health", "live"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Threat Modeling",
+      "item": [
+        {
+          "name": "POST Analyze Diagram",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Imagem do diagrama (PNG, JPEG, WebP, GIF)"
+                },
+                {
+                  "key": "confidence",
+                  "value": "0.35",
+                  "type": "text",
+                  "description": "Opcional - threshold de confiança (futuro YOLO)"
+                },
+                {
+                  "key": "iou",
+                  "value": "0.45",
+                  "type": "text",
+                  "description": "Opcional - IoU threshold (futuro YOLO)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/threat-model/analyze",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "threat-model", "analyze"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

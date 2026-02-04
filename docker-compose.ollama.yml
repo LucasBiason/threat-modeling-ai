@@ -1,0 +1,19 @@
+# Só Ollama - para comparativo de LLMs no notebook 02
+# Uso: docker compose -f docker-compose.ollama.yml up -d
+# Após subir: docker compose -f docker-compose.ollama.yml exec ollama ollama pull qwen2.5-vl
+#             docker compose -f docker-compose.ollama.yml exec ollama ollama pull llava
+#             docker compose -f docker-compose.ollama.yml exec ollama ollama pull deepseek-vl
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: threat-modeling-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+volumes:
+  ollama_data:
