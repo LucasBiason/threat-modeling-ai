@@ -2,99 +2,145 @@
 
 **Desafio Técnico:** Sistema de modelagem de ameaças automatizada usando Computer Vision, Graph Theory e STRIDE/DREAD.
 
-**Notion (Estudos):** O card deste projeto está no database Studies. Atualizações via script `notion-automation-suite/scripts/update_study_cards_ml_spam_and_threat_modeling.py` (busca por título "Threat Modeling AI") ou `Trabalho/Astracode/Scripts/atualizar_cards_projetos_finalizados_notion.py`. Documentação completa do contexto (para o card e referência): `docs/CONTEXTO_PROJETO_NOTION.md`.
-
 ## Visão Geral
 
 Este projeto implementa um sistema completo de análise de ameaças em diagramas de arquitetura usando:
-- **YOLO** para detecção de componentes
-- **OpenCV** para detecção de boundaries e conexões
+
+- **YOLO** para detecção de componentes (treino em datasets Roboflow/Kaggle)
+- **LLM Vision** (Gemini → OpenAI → Ollama) para análise de diagramas com fallback multi-provider
 - **NetworkX** para construção de grafo arquitetural
-- **STRIDE** para análise de ameaças
+- **STRIDE** para análise de ameaças com RAG
 - **DREAD** para priorização de riscos
 
-## Escopo atual
+## Escopo Atual
 
-- **Agora:** apenas **dataset real** (ex.: Roboflow AWS/Azure System Diagrams) e **treinamento** do modelo YOLO.
-- **Diagramas sintéticos** (geração para testes): isolados para **outro momento**.
-- **Diagramas reais** (captados na internet): no futuro, pasta específica → passar numa **LLM** para insights → usar o **relatório** como base para avaliar o quanto o projeto se aproxima do correto. Ver `rascunho/Documentacao/DIAGRAMAS_SINTETICOS_E_REAIS.md`.
+- **Backend:** threat-analyzer (análise STRIDE/DREAD) e threat-service (upload assíncrono, Celery, PostgreSQL)
+- **Frontend:** threat-frontend — upload de diagramas, listagem de análises, detalhe com polling
+- **Notebooks:** treino YOLO, download datasets, integração LLM, RAG (Docling + ChromaDB)
+- **Datasets:** Roboflow (AWS/Azure System Diagrams) e Kaggle (formato VOC, conversão automática para YOLO)
 
 ## Estrutura do Projeto
 
 ```
 threat-modeling-ai/
-├── notebooks/              # Notebooks (análise base, treino, detecção)
-├── dataset/                # Dataset (real: train/val/test ou export Roboflow)
-├── model/                  # Treinamento e inferência YOLO
-├── vision/                 # Detecção de boundaries e conexões
-├── graph/                  # Construção de grafo arquitetural
-├── stride_engine/          # Engine STRIDE e DREAD
-├── Documentacao/           # Docs (datasets, diagramas sintéticos/reais)
-├── rascunho/               # Código e docs em migração para a raiz
-└── ...
+├── threat-analyzer/         # Servico de analise (STRIDE, DREAD, LLM)
+├── threat-service/         # API principal (upload, Celery, PostgreSQL)
+├── threat-frontend/        # UI React (Vite, Tailwind)
+├── notebooks/               # Notebooks e scripts (treino, download, RAG)
+│   ├── scripts/
+│   │   ├── download/        # prepare_roboflow, prepare_kaggle (um comando por base)
+│   │   ├── rag_processing/  # process_knowledge_base (input_files -> output_files + tar.gz)
+│   │   └── train/           # train_yolo, paths (YOLO 11; best.pt onde e gerado)
+│   ├── knowledge-base/      # Base RAG (input_files + output_files)
+│   ├── models/              # yolo11n.pt e pesos por fonte
+│   ├── dataset/             # Datasets (roboflow/, kaggle/) - gitignore
+│   ├── outputs/             # Saidas de treino - gitignore
+│   └── requirements.txt
+├── configs/                 # .env unico (injetado via Docker)
+├── private-context/         # Documentacao e planejamento (AGENTS.md, docs/)
+├── scripts/                 # install_local_llm.sh
+└── docker-compose.yml
 ```
 
 ## Como Usar
 
-### 1. Setup completo (ambiente + dataset)
+### 1. Setup (ambientes separados)
 
-Na raiz do projeto:
+| Comando                | Descrição                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `make setup`           | Setup completo (backend + frontend + notebooks)                                 |
+| `make setup-backend`   | Só backend (threat-analyzer + threat-service em `.venv`)                        |
+| `make setup-frontend`  | Só threat-frontend (`npm install` em threat-frontend/)                          |
+| `make setup-notebooks` | Só notebooks (libs YOLO/Jupyter/RAG + kernel **"Python (threat-modeling-ai)"**) |
+
+**Requirements por componente:**
+
+- Backend: `threat-analyzer/requirements.txt` + `threat-service/requirements.txt`
+- Frontend: `threat-frontend/package.json`
+- Notebooks: `notebooks/requirements.txt`
+
+### 2. Datasets
 
 ```bash
-make setup-notebooks
+make download-roboflow   # Roboflow (requer ROBOFLOW_API_KEY em configs/.env)
+make download-kaggle     # Kaggle ~33GB (requer kaggle CLI; inclui VOC→YOLO e verificação)
 ```
 
-Isso executa:
-1. **scripts/setup_venv_kernel.sh** – cria `.venv`, instala dependências e registra o kernel Jupyter **"Python (threat-modeling-ai)"**.
-2. **scripts/download_dataset.py** – baixa o dataset AWS and Azure System Diagrams (Roboflow) em formato YOLOv8 para `dataset/` na raiz (requer `configs/.env` com `ROBOFLOW_API_KEY`).
+Datasets em `notebooks/dataset/roboflow/` e `notebooks/dataset/kaggle/`.
 
-### 2. Apenas ambiente (.venv + kernel)
+### 3. RAG (base de conhecimento)
+
+A fonte é `notebooks/knowledge-base/input_files/`. O processamento gera `output_files/` (gitignore) e **copia para** `threat-analyzer/app/rag_data/` (pasta versionada com .gitkeep; conteúdo não commitado):
 
 ```bash
-make setup-venv
+make process-rag-kb   # Converte PDF/DOCX/PNG → MD e popula app/rag_data do analyzer
+```
+
+O analyzer lê de `threat-analyzer/app/rag_data/`. Execute após adicionar documentos em `input_files/`.
+
+### 4. Treinar YOLO
+
+O treino **trava o kernel Jupyter** — execute no terminal:
+
+```bash
+make train-roboflow
 # ou
-./scripts/setup_venv_kernel.sh
+make train-kaggle
+# ou
+python -m notebooks.scripts.train.train_yolo --dataset roboflow --epochs 200
 ```
 
-Ative com: `source .venv/bin/activate`. No Jupyter/Lab, selecione o kernel **"Python (threat-modeling-ai)"**.
+Pesos ficam em `notebooks/outputs/<fonte>/weights/best.pt`; use esse caminho nos notebooks.
 
-### 3. Apenas download do dataset
+### 5. Rodar o sistema (apenas Docker)
+
+Crie `configs/.env` a partir de `configs/.env.example` e defina as credenciais. Nunca commite `configs/.env`.
 
 ```bash
-make download-dataset
-# ou (com .venv ativo)
-python scripts/download_dataset.py
+make run                 # Stack com logs no terminal
+make run-detached        # Stack em background (producao)
+make install-local-llm   # Sobe Ollama, baixa modelos vision e verifica (um comando)
 ```
 
-Requer `configs/.env` com `ROBOFLOW_API_KEY`. O dataset vai para **`dataset/`** na raiz do projeto (uma única pasta).
-
-### 4. Treinar o modelo YOLO
-
-O **treino é feito no notebook** (passo a passo didático). Abra `notebooks/00-analise-base-treino-componentes.ipynb` e execute as células na ordem; o **Passo 4** contém o treino (usa `dataset/data.yaml` e salva pesos em `runs/detect/train/weights/best.pt`). Os scripts na raiz são apenas para **download** e **validação** do dataset.
-
-### 6. Executar Pipeline Completo
-
-Quando migrarmos o código para a raiz:
+### 6. Testes e lint (apenas nos Makefiles de cada servico)
 
 ```bash
-python main.py --input diagram.png
+make -C threat-analyzer test
+make -C threat-analyzer lint
+make -C threat-modeling-api test
+make -C threat-modeling-api lint
+make -C frontend lint
 ```
 
-Por enquanto o pipeline está em `rascunho/main.py`.
+O Makefile na raiz nao tem alvos test/lint/clean.
 
-## Notebooks (por etapas)
+**threat-modeling-api:** testes requerem PostgreSQL. Crie `createdb threat_modeling_test` ou defina `TEST_DATABASE_URL`.
 
-- **`notebooks/00-analise-base-treino-componentes.ipynb`** – Análise da base de treino e **imagem → detecção de componentes e ligações** (componentes e conexões).
-- **`rascunho/notebooks/`** – Notebooks de referência (dataset sintético, YOLO, STRIDE, DREAD, pipeline) em `rascunho/`.
+### 7. Pre-commit
+
+```bash
+pip install pre-commit && pre-commit install
+```
+
+Em todo commit e executado `scripts/pre_commit.sh` (lint em threat-modeling-shared e nos tres servicos, testes em threat-analyzer e threat-modeling-api).
+
+## Notebooks
+
+| Notebook                           | Descrição                       |
+| ---------------------------------- | ------------------------------- |
+| `00-treinamento-roboflow.ipynb`    | Treino YOLO no dataset Roboflow |
+| `01-treinamento-kaggle.ipynb`      | Treino YOLO no dataset Kaggle   |
+| `02-integracao-llm-fallback.ipynb` | Integração LLM com fallback     |
+| `03-docling-rag-prep.ipynb`        | Docling + RAG (ChromaDB)        |
+
+Kernel Jupyter: **"Python (threat-modeling-ai)"** (após `make setup-notebooks`).
 
 ## Tecnologias
 
-- Python 3.10+
-- YOLOv8 (Ultralytics)
-- OpenCV
-- NetworkX
-- Streamlit
-- OWASP pytm
+- **Backend:** FastAPI, Celery, Redis, PostgreSQL, LangChain, ChromaDB
+- **Frontend:** React, Vite, Tailwind, Framer Motion
+- **Notebooks:** Python 3.10+, YOLOv8 (Ultralytics), PyTorch, Jupyter, Docling
+- **LLM:** Gemini, OpenAI, Ollama (vision)
 
 ## Licença
 
@@ -102,5 +148,4 @@ MIT
 
 ---
 
-*Modelagem de ameaças automatizada em diagramas de arquitetura.*
-
+_Modelagem de ameaças automatizada em diagramas de arquitetura._

@@ -1,0 +1,9 @@
+# Pre-commit: lint e test por servico. Instalar: pip install pre-commit && pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: lint-and-test
+        name: lint and test (por servico)
+        entry: bash scripts/pre_commit.sh
+        language: system
+        pass_filenames: false

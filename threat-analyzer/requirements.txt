@@ -1,0 +1,18 @@
+# Runtime only (test deps in requirements-test.txt)
+# Local dev: pip install -e ../threat-modeling-shared && pip install -r requirements.txt
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv
+httpx
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-google-genai
+langchain-openai
+langchain-ollama>=0.1.0
+langchain-community
+unstructured
+markdown
+chromadb

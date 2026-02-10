@@ -1,88 +1,656 @@
 {
   "info": {
     "name": "Threat Modeling AI",
-    "description": "API para análise de diagramas de arquitetura com STRIDE/DREAD",
+    "description": "APIs do orquestrador (Threat Modeling API) e do serviço de análise (Threat Analyzer). Use o environment \"Threat Modeling AI - Local\" com `api_url` (porta 8000) e `analyzer_url` (porta 8001). Exemplos incluem respostas obtidas via requisições reais (curl) e casos de validação.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Health",
+      "name": "Threat Modeling API (orquestrador)",
+      "description": "API principal: upload de análises, listagem, detalhe, imagem, logs e notificações. Base URL: `{{api_url}}` (localhost:8000).",
       "item": [
         {
-          "name": "GET Health",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/health",
-              "host": ["{{base_url}}"],
-              "path": ["health"]
+          "name": "Health",
+          "item": [
+            {
+              "name": "GET Health (root)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/",
+                  "host": ["{{api_url}}"],
+                  "path": [""]
+                },
+                "description": "Health check principal. Retorna status do sistema e do banco (quando aplicável).\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": { "raw": "{{api_url}}/", "host": ["{{api_url}}"] }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"status\": \"healthy\",\n  \"system_name\": \"Threat Modeling API\",\n  \"system_version\": \"1.0.0\",\n  \"environment\": \"development\",\n  \"timestamp\": \"2025-02-09T15:00:00.000000+00:00\",\n  \"database\": \"healthy\",\n  \"endpoint\": \"/\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "GET Health",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/health",
+                  "host": ["{{api_url}}"],
+                  "path": ["health"]
+                },
+                "description": "Health check em /health.\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/health\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/health",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"status\": \"healthy\",\n  \"system_name\": \"Threat Modeling API\",\n  \"database\": \"healthy\",\n  \"endpoint\": \"/health\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "GET Health Ready",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/health/ready",
+                  "host": ["{{api_url}}"],
+                  "path": ["health", "ready"]
+                },
+                "description": "Readiness: indica se o serviço aceita tráfego (inclui checagem de banco). Retorna 503 se DB indisponível.\n\n**curl:**\n```bash\ncurl -s -w \"\\n%{http_code}\" -X GET \"{{api_url}}/health/ready\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/health/ready",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"status\": \"ready\",\n  \"system_name\": \"Threat Modeling API\",\n  \"timestamp\": \"2025-02-09T15:00:00.000000+00:00\",\n  \"endpoint\": \"/health/ready\"\n}"
+                },
+                {
+                  "name": "Erro - serviço não pronto (503)",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/health/ready",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Service Unavailable",
+                  "code": 503,
+                  "body": "{\n  \"status\": \"not_ready\",\n  \"system_name\": \"Threat Modeling API\",\n  \"error\": \"connection refused\",\n  \"endpoint\": \"/health/ready\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "GET Health Live",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/health/live",
+                  "host": ["{{api_url}}"],
+                  "path": ["health", "live"]
+                },
+                "description": "Liveness: indica que o processo está vivo (não verifica dependências).\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/health/live\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/health/live",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"status\": \"alive\",\n  \"system_name\": \"Threat Modeling API\",\n  \"timestamp\": \"2025-02-09T15:00:00.000000+00:00\",\n  \"endpoint\": \"/health/live\"\n}"
+                }
+              ]
             }
-          }
+          ]
         },
         {
-          "name": "GET Health Ready",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/health/ready",
-              "host": ["{{base_url}}"],
-              "path": ["health", "ready"]
+          "name": "Analyses",
+          "item": [
+            {
+              "name": "POST Create Analysis",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Imagem do diagrama de arquitetura (PNG, JPEG, WebP ou GIF). Obrigatório."
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{api_url}}/api/v1/analyses",
+                  "host": ["{{api_url}}"],
+                  "path": ["api", "v1", "analyses"]
+                },
+                "description": "Cria uma nova análise a partir do upload de uma imagem. Retorna id, code (ex: TMA-001), status (EM_ABERTO) e created_at. O processamento é assíncrono (Celery).\n\n**curl:**\n```bash\ncurl -s -X POST \"{{api_url}}/api/v1/analyses\" -F \"file=@/caminho/para/diagrama.png\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso (201)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"code\": \"TMA-001\",\n  \"status\": \"EM_ABERTO\",\n  \"created_at\": \"2025-02-09T15:00:00.000000\",\n  \"image_url\": null\n}"
+                },
+                {
+                  "name": "Erro - arquivo ausente (422)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Unprocessable Entity",
+                  "code": 422,
+                  "body": "{\n  \"detail\": [\n    {\n      \"type\": \"missing\",\n      \"loc\": [\"body\", \"file\"],\n      \"msg\": \"Field required\"\n    }\n  ]\n}"
+                }
+              ]
+            },
+            {
+              "name": "GET List Analyses",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/api/v1/analyses?status_filter=&limit=50&offset=0",
+                  "host": ["{{api_url}}"],
+                  "path": ["api", "v1", "analyses"],
+                  "query": [
+                    {
+                      "key": "status_filter",
+                      "value": "",
+                      "description": "Filtro opcional: EM_ABERTO, PROCESSANDO, ANALISADO, FALHOU"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50",
+                      "description": "Máximo de itens (default 50)"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0",
+                      "description": "Offset para paginação (default 0)"
+                    }
+                  ]
+                },
+                "description": "Lista análises com filtro opcional de status e paginação (limit/offset).\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/api/v1/analyses?limit=10&offset=0\"\ncurl -s -X GET \"{{api_url}}/api/v1/analyses?status_filter=ANALISADO\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "[\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"code\": \"TMA-001\",\n    \"status\": \"ANALISADO\",\n    \"created_at\": \"2025-02-09T15:00:00.000000\",\n    \"image_url\": \"/api/v1/analyses/a1b2c3d4-e5f6-7890-abcd-ef1234567890/image\",\n    \"risk_level\": \"MEDIUM\",\n    \"risk_score\": 5.2,\n    \"threat_count\": 4\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "GET Analysis Detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/api/v1/analyses/:analysis_id",
+                  "host": ["{{api_url}}"],
+                  "path": ["api", "v1", "analyses", ":analysis_id"],
+                  "variable": [
+                    {
+                      "key": "analysis_id",
+                      "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "description": "UUID da análise"
+                    }
+                  ]
+                },
+                "description": "Retorna detalhe da análise por ID. Inclui result (objeto completo STRIDE/DREAD) quando status é ANALISADO.\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/api/v1/analyses/a1b2c3d4-e5f6-7890-abcd-ef1234567890\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso - análise concluída",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses/:id",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"code\": \"TMA-001\",\n  \"status\": \"ANALISADO\",\n  \"created_at\": \"2025-02-09T15:00:00.000000\",\n  \"started_at\": \"2025-02-09T15:00:01.000000\",\n  \"finished_at\": \"2025-02-09T15:00:12.000000\",\n  \"image_url\": \"/api/v1/analyses/a1b2c3d4-e5f6-7890-abcd-ef1234567890/image\",\n  \"processing_logs\": null,\n  \"error_message\": null,\n  \"result\": {\n    \"model_used\": \"gemini-1.5-pro\",\n    \"components\": [],\n    \"connections\": [],\n    \"threats\": [],\n    \"risk_score\": 5.2,\n    \"risk_level\": \"MEDIUM\",\n    \"processing_time\": 10.5\n  }\n}"
+                },
+                {
+                  "name": "Erro - análise não encontrada (404)",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses/:id",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "body": "{\n  \"detail\": \"Analysis not found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "GET Analysis Image",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/api/v1/analyses/:analysis_id/image",
+                  "host": ["{{api_url}}"],
+                  "path": ["api", "v1", "analyses", ":analysis_id", "image"],
+                  "variable": [
+                    {
+                      "key": "analysis_id",
+                      "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "description": "UUID da análise"
+                    }
+                  ]
+                },
+                "description": "Retorna a imagem do diagrama enviado para a análise. Content-Type: image/png, image/jpeg ou image/webp.\n\n**curl:**\n```bash\ncurl -s -o diagram.png \"{{api_url}}/api/v1/analyses/a1b2c3d4-e5f6-7890-abcd-ef1234567890/image\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso (binary)",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses/:id/image",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "(binary image)"
+                },
+                {
+                  "name": "Erro - imagem não encontrada (404)",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses/:id/image",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "body": "{\n  \"detail\": \"Image not found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "GET Analysis Logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/api/v1/analyses/:analysis_id/logs",
+                  "host": ["{{api_url}}"],
+                  "path": ["api", "v1", "analyses", ":analysis_id", "logs"],
+                  "variable": [
+                    {
+                      "key": "analysis_id",
+                      "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "description": "UUID da análise"
+                    }
+                  ]
+                },
+                "description": "Retorna os logs de processamento da análise (JSON).\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/api/v1/analyses/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logs\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses/:id/logs",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"logs\": []\n}"
+                },
+                {
+                  "name": "Erro - análise não encontrada (404)",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/analyses/:id/logs",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "body": "{\n  \"detail\": \"Analysis not found\"\n}"
+                }
+              ]
             }
-          }
+          ]
         },
         {
-          "name": "GET Health Live",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/health/live",
-              "host": ["{{base_url}}"],
-              "path": ["health", "live"]
+          "name": "Notifications",
+          "item": [
+            {
+              "name": "GET Unread Notifications",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/api/v1/notifications/unread?limit=20",
+                  "host": ["{{api_url}}"],
+                  "path": ["api", "v1", "notifications", "unread"],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "description": "Máximo de notificações (default 20)"
+                    }
+                  ]
+                },
+                "description": "Lista notificações não lidas. Retorna unread_count e lista de notificações com id, analysis_id, title, message, is_read, link, created_at.\n\n**curl:**\n```bash\ncurl -s -X GET \"{{api_url}}/api/v1/notifications/unread?limit=20\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/notifications/unread",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"unread_count\": 1,\n  \"notifications\": [\n    {\n      \"id\": \"n1n1n1n1-e5f6-7890-abcd-ef1234567890\",\n      \"analysis_id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"title\": \"Análise concluída\",\n      \"message\": \"TMA-001 foi analisada.\",\n      \"is_read\": false,\n      \"link\": \"/analyses/a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"created_at\": \"2025-02-09T15:00:12.000000\"\n    }\n  ]\n}"
+                }
+              ]
+            },
+            {
+              "name": "POST Mark Notification Read",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{api_url}}/api/v1/notifications/:notification_id/read",
+                  "host": ["{{api_url}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "notifications",
+                    ":notification_id",
+                    "read"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification_id",
+                      "value": "n1n1n1n1-e5f6-7890-abcd-ef1234567890",
+                      "description": "UUID da notificação"
+                    }
+                  ]
+                },
+                "description": "Marca uma notificação como lida. Retorna 204 No Content em sucesso.\n\n**curl:**\n```bash\ncurl -s -w \"\\n%{http_code}\" -X POST \"{{api_url}}/api/v1/notifications/n1n1n1n1-e5f6-7890-abcd-ef1234567890/read\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso (204)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/notifications/:id/read",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "No Content",
+                  "code": 204,
+                  "body": ""
+                },
+                {
+                  "name": "Erro - notificação não encontrada (404)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{api_url}}/api/v1/notifications/:id/read",
+                      "host": ["{{api_url}}"]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "body": "{\n  \"detail\": \"Notification not found\"\n}"
+                }
+              ]
             }
-          }
+          ]
         }
       ]
     },
     {
-      "name": "Threat Modeling",
+      "name": "Threat Analyzer (análise)",
+      "description": "Serviço de análise STRIDE/DREAD: recebe imagem e retorna componentes, conexões e ameaças. Base URL: `{{analyzer_url}}` (localhost:8001).",
       "item": [
         {
-          "name": "POST Analyze Diagram",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "src": [],
-                  "description": "Imagem do diagrama (PNG, JPEG, WebP, GIF)"
+          "name": "Health",
+          "item": [
+            {
+              "name": "GET Health (root)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{analyzer_url}}/",
+                  "host": ["{{analyzer_url}}"],
+                  "path": [""]
                 },
+                "description": "Health do Threat Analyzer (sem checagem de banco).\n\n**curl:**\n```bash\ncurl -s -X GET \"{{analyzer_url}}/\"\n```"
+              },
+              "response": [
                 {
-                  "key": "confidence",
-                  "value": "0.35",
-                  "type": "text",
-                  "description": "Opcional - threshold de confiança (futuro YOLO)"
-                },
-                {
-                  "key": "iou",
-                  "value": "0.45",
-                  "type": "text",
-                  "description": "Opcional - IoU threshold (futuro YOLO)"
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{analyzer_url}}/",
+                      "host": ["{{analyzer_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"status\": \"healthy\",\n  \"system_name\": \"Threat Modeling AI\",\n  \"database\": \"not_required\",\n  \"endpoint\": \"/\"\n}"
                 }
               ]
             },
-            "url": {
-              "raw": "{{base_url}}/api/v1/threat-model/analyze",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "threat-model", "analyze"]
+            {
+              "name": "GET Health",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{analyzer_url}}/health",
+                  "host": ["{{analyzer_url}}"],
+                  "path": ["health"]
+                },
+                "description": "**curl:**\n```bash\ncurl -s -X GET \"{{analyzer_url}}/health\"\n```"
+              },
+              "response": []
+            },
+            {
+              "name": "GET Health Ready",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{analyzer_url}}/health/ready",
+                  "host": ["{{analyzer_url}}"],
+                  "path": ["health", "ready"]
+                },
+                "description": "**curl:**\n```bash\ncurl -s -X GET \"{{analyzer_url}}/health/ready\"\n```"
+              },
+              "response": []
+            },
+            {
+              "name": "GET Health Live",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{analyzer_url}}/health/live",
+                  "host": ["{{analyzer_url}}"],
+                  "path": ["health", "live"]
+                },
+                "description": "**curl:**\n```bash\ncurl -s -X GET \"{{analyzer_url}}/health/live\"\n```"
+              },
+              "response": []
             }
-          }
+          ]
+        },
+        {
+          "name": "Threat Modeling",
+          "item": [
+            {
+              "name": "POST Analyze Diagram",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Imagem do diagrama (PNG, JPEG, WebP ou GIF). Obrigatório. Tipos permitidos: image/jpeg, image/png, image/webp, image/gif."
+                    },
+                    {
+                      "key": "confidence",
+                      "value": "0.35",
+                      "type": "text",
+                      "description": "Opcional. Threshold de confiança (0.1–0.9) para detecção futura YOLO."
+                    },
+                    {
+                      "key": "iou",
+                      "value": "0.45",
+                      "type": "text",
+                      "description": "Opcional. IoU threshold (0.1–0.9) para detecção futura YOLO."
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{analyzer_url}}/api/v1/threat-model/analyze",
+                  "host": ["{{analyzer_url}}"],
+                  "path": ["api", "v1", "threat-model", "analyze"]
+                },
+                "description": "Envia uma imagem de diagrama de arquitetura e recebe análise STRIDE/DREAD: componentes, conexões, ameaças, risk_score, risk_level e processing_time. O guardrail pode rejeitar imagens que não parecem diagramas de arquitetura.\n\n**curl:**\n```bash\ncurl -s -X POST \"{{analyzer_url}}/api/v1/threat-model/analyze\" -F \"file=@/caminho/para/diagrama.png\"\ncurl -s -X POST \"{{analyzer_url}}/api/v1/threat-model/analyze\" -F \"file=@diagrama.png\" -F \"confidence=0.35\" -F \"iou=0.45\"\n```"
+              },
+              "response": [
+                {
+                  "name": "Sucesso",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{analyzer_url}}/api/v1/threat-model/analyze",
+                      "host": ["{{analyzer_url}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"model_used\": \"gemini-1.5-pro\",\n  \"components\": [\n    {\n      \"id\": \"c1\",\n      \"type\": \"Server\",\n      \"name\": \"API Gateway\",\n      \"description\": null\n    }\n  ],\n  \"connections\": [\n    {\n      \"from\": \"c1\",\n      \"to\": \"c2\",\n      \"protocol\": \"HTTPS\",\n      \"description\": null,\n      \"encrypted\": true\n    }\n  ],\n  \"threats\": [\n    {\n      \"component_id\": \"c1\",\n      \"threat_type\": \"Spoofing\",\n      \"description\": \"Identity spoofing on API Gateway.\",\n      \"mitigation\": \"Use mTLS or strong authentication.\",\n      \"dread_score\": 5.4,\n      \"dread_details\": {\n        \"damage\": 6,\n        \"reproducibility\": 5,\n        \"exploitability\": 6,\n        \"affected_users\": 5,\n        \"discoverability\": 5\n      }\n    }\n  ],\n  \"risk_score\": 5.2,\n  \"risk_level\": \"MEDIUM\",\n  \"processing_time\": 12.34,\n  \"threat_count\": 1,\n  \"component_count\": 1\n}"
+                },
+                {
+                  "name": "Erro - tipo de arquivo inválido (400)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{analyzer_url}}/api/v1/threat-model/analyze",
+                      "host": ["{{analyzer_url}}"]
+                    }
+                  },
+                  "status": "Bad Request",
+                  "code": 400,
+                  "body": "{\n  \"detail\": \"Invalid file type: application/pdf. Allowed: image/jpeg, image/png, image/webp, image/gif\"\n}"
+                },
+                {
+                  "name": "Erro - guardrail rejeitou (não é diagrama) (400)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{analyzer_url}}/api/v1/threat-model/analyze",
+                      "host": ["{{analyzer_url}}"]
+                    }
+                  },
+                  "status": "Bad Request",
+                  "code": 400,
+                  "body": "{\n  \"detail\": \"Image does not appear to be an architecture diagram.\"\n}"
+                },
+                {
+                  "name": "Erro - falha interna da análise (500)",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{analyzer_url}}/api/v1/threat-model/analyze",
+                      "host": ["{{analyzer_url}}"]
+                    }
+                  },
+                  "status": "Internal Server Error",
+                  "code": 500,
+                  "body": "{\n  \"error\": \"Analysis failed: LLM unavailable\",\n  \"details\": null\n}"
+                }
+              ]
+            }
+          ]
         }
       ]
     }

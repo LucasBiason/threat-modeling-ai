@@ -1,39 +1,61 @@
-# API Contracts — Threat Modeling AI
+# Contratos de API — Threat Modeling AI
 
-## Base URL
+Resumo dos endpoints e contratos. Coleção Postman completa em `docs/Postman Collections/`.
 
-`/api/v1/threat-model`
+---
 
-## POST /analyze
+## threat-modeling-api (orquestrador)
 
-- **Request:** `multipart/form-data`
-  - `file` (obrigatório): imagem do diagrama (PNG, JPG, WEBP).
-  - `confidence` (opcional): float, threshold do modelo (0.1–0.9).
-  - `iou` (opcional): float, IoU threshold (0.1–0.9).
-- **Response:** JSON
-  - `model_used`: string (ex.: "DummyPipeline" ou "gemini-1.5-pro").
-  - `components`: lista de `{ id, type, name, bbox?, confidence? }`.
-  - `connections`: lista de `{ from, to, protocol? }`.
-  - `threats`: lista de `{ component_id, threat_type, description, mitigation, dread_score?, dread_details? }`.
-  - `risk_score`: float (0–10).
-  - `risk_level`: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL".
-  - `processing_time`: float (segundos).
-  - `threat_count`, `component_count`: computed.
+Base: `http://localhost:8000` (local). Prefixo das rotas de negócio: `/api/v1`.
+
+### Analyses
+
+| Método | Rota                        | Descrição                                                                                                                       |
+| ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | /api/v1/analyses            | Cria análise (body: multipart, campo `file` obrigatório). Retorna 201 com id, code, status EM_ABERTO, created_at, image_url.    |
+| GET    | /api/v1/analyses            | Lista análises. Query: status_filter (EM_ABERTO \| PROCESSANDO \| ANALISADO \| FALHOU), limit (default 50), offset (default 0). |
+| GET    | /api/v1/analyses/{id}       | Detalhe da análise; inclui result quando status = ANALISADO. 404 se não existir.                                                |
+| GET    | /api/v1/analyses/{id}/image | Retorna a imagem do diagrama (Content-Type conforme extensão). 404 se imagem não existir.                                       |
+| GET    | /api/v1/analyses/{id}/logs  | Retorna { logs } (JSON). 404 se análise não existir.                                                                            |
+
+### Notifications
+
+| Método | Rota                            | Descrição                                                                                        |
+| ------ | ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| GET    | /api/v1/notifications/unread    | Lista notificações não lidas. Query: limit (default 20). Retorna unread_count e notifications[]. |
+| POST   | /api/v1/notifications/{id}/read | Marca notificação como lida. 204 sem body. 404 se não existir.                                   |
+
+### Health
+
+| Método | Rota                                              | Descrição                                                                                          |
+| ------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| GET    | /, /health, /health/, /health/ready, /health/live | Status do serviço; ready inclui checagem de banco; live não. Ready retorna 503 se DB indisponível. |
+
+---
+
+## threat-analyzer (microserviço de análise)
+
+Base: `http://localhost:8001` (local). Prefixo da rota de análise: `/api/v1/threat-model`.
+
+### POST /api/v1/threat-model/analyze
+
+- **Request:** multipart/form-data
+  - `file` (obrigatório): imagem (PNG, JPEG, WebP, GIF). Tipos permitidos: image/jpeg, image/png, image/webp, image/gif.
+  - `confidence` (opcional): float, threshold futuro (ex.: YOLO).
+  - `iou` (opcional): float, IoU threshold futuro.
+- **Response (200):** JSON
+  - model_used, components[], connections[], threats[], risk_score (0–10), risk_level (LOW|MEDIUM|HIGH|CRITICAL), processing_time, threat_count, component_count.
 - **Erros:**
-  - 400: tipo de arquivo inválido.
-  - 500: erro interno (ThreatModelingError).
+  - 400: tipo de arquivo inválido ou guardrail rejeitou (não é diagrama de arquitetura).
+  - 500: ThreatModelingError (detalhe em body).
 
-## Health
+### Health
 
-- **GET /health**, **GET /health/ready**, **GET /health/live**
-- **Response:** JSON com `status`, `system_name`, `timestamp`, etc.
+- GET /, /health, /health/ready, /health/live — mesmo padrão do orquestrador; analyzer não verifica banco.
 
-## POST /chat (opcional, futuro)
-
-- **Request:** JSON com `message` e opcional `report_id`.
-- **Response:** JSON com `reply` (guardrails: tema STRIDE/DREAD e diagrama analisado).
+---
 
 ## Referência
 
 - Postman: `docs/Postman Collections/Threat Modeling AI.postman_collection.json`
-- Environment: `Threat Modeling AI - Local.postman_environment.json` (base_url: http://localhost:8000)
+- Environment local: `api_url` = http://localhost:8000, `analyzer_url` = http://localhost:8001

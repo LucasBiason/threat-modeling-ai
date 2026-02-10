@@ -1,0 +1,22 @@
+# Build context (used when building threat-analyzer from repo root)
+.git
+.gitignore
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.venv
+**/venv
+**/node_modules
+**/*.pyc
+*.md
+!threat-analyzer/README.md
+!threat-modeling-shared/README.md
+private-context
+notebooks
+frontend
+docs
+configs
+scripts
+*.log
+.env
+.env.*

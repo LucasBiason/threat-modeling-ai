@@ -1,0 +1,4 @@
+# Test-only deps (CI stage; not installed in final image)
+-r requirements.txt
+pytest>=7.0
+pytest-cov>=4.0.0

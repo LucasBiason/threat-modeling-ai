@@ -1,0 +1,12 @@
+[run]
+source = app
+omit =
+    */tests/*
+    */__init__.py
+
+[report]
+show_missing = true
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError

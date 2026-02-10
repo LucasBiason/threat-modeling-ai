@@ -1,5 +1,10 @@
 # Python
 __pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
 *.py[cod]
 *$py.class
 *.so
@@ -31,29 +36,29 @@ ENV/
 .ipynb_checkpoints
 *.ipynb_checkpoints/
 
-# Dataset (Roboflow: dados em notebooks/dataset/roboflow)
+# Dataset e saidas de treino (tudo em notebooks/)
 dataset/
 dataset_tmp/
-notebooks/dataset/roboflow/train/
-notebooks/dataset/roboflow/valid/
-notebooks/dataset/roboflow/test/
-
-# Saída do treino (notebooks/outputs/)
+notebooks/dataset/
+notebooks/dataset_tmp/
+outputs/
 notebooks/outputs/
-notebooks/outputs_kaggle/
 
-# Dataset Kaggle (em dataset/kaggle/ - raw, train, valid cobertos por dataset/)
-
-# Model weights
+# Model weights (exceto best.pt de cada fonte em notebooks/models/)
 model/weights/
 model/runs/
 *.pt
 *.pth
 *.onnx
+!notebooks/models/kaggle/best.pt
+!notebooks/models/roboflow/best.pt
 
 # Logs
 *.log
 logs/
+
+# Contexto e planejamento (nao commitar)
+private-context/
 
 # Environment (NUNCA commitar chaves)
 .env
@@ -65,6 +70,7 @@ configs/.env
 configs/.env.local
 
 # IDE
+.cursor/
 .vscode/
 .idea/
 *.swp
@@ -86,6 +92,14 @@ Thumbs.db
 temp/
 tmp/
 
+# RAG - output_files gerado por make process-rag-kb
+notebooks/knowledge-base/output_files/
+
+# RAG - conteúdo da base no threat-analyzer (pasta versionada via .gitkeep; conteúdo ignorado)
+threat-analyzer/app/rag_data/*
+!threat-analyzer/app/rag_data/.gitkeep
+
 # LLM cache (SQLite) - Redis será o cache final em produção
+.langchain_cache/
 .langchain_cache.db
 *.cache.db

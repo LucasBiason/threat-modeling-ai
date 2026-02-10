@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "threat-modeling-shared"
+version = "0.1.0"
+description = "Shared FastAPI utilities for Threat Modeling AI services"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "redis>=5.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["threat_modeling_shared*"]

@@ -1,0 +1,2 @@
+# Mantém a pasta no repositório; o conteúdo (base RAG) não é versionado.
+# Preencher com: make process-rag-kb (copia output_files para aqui)

@@ -1,5 +1,7 @@
 # 30 — Features
 
-Especificação de funcionalidades:
+Especificações por feature (Spec Driven).
 
-- **frontend-ui-ux.md** — Comportamento e design do frontend (upload, sidebar/drawer, análise, resultados STRIDE, referência ao vídeo e ao componente SecurityAnalyzer).
+| Documento                              | Conteúdo                                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [frontend-ui-ux.md](frontend-ui-ux.md) | Comportamento e design do frontend (upload assíncrono, listagem, detalhe, notificações, relatório STRIDE/DREAD). |

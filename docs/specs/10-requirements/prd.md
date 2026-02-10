@@ -2,29 +2,30 @@
 
 ## Visão
 
-Sistema que recebe um diagrama de arquitetura (imagem), identifica componentes e conexões, e gera análise de ameaças STRIDE com priorização DREAD, entregando um relatório utilizável.
+Sistema que recebe um diagrama de arquitetura (imagem), identifica componentes e conexões, e gera análise de ameaças STRIDE com priorização DREAD, entregando um relatório utilizável de forma assíncrona (upload → processamento em background → notificação e consulta).
 
 ## Escopo (in scope)
 
-- Upload de diagrama (PNG, JPG, WEBP).
-- Detecção de componentes via LLM vision (DiagramAgent) com fallback multi-provider (Gemini → OpenAI → Ollama). DummyPipeline para testes sem LLM.
-- Análise STRIDE com RAG (base em `docs/knowledge-base/`) e DREAD scoring.
-- API: POST `/api/v1/threat-model/analyze` → componentes, conexões, ameaças, risk_score, risk_level (JSON).
-- Health: `/health`, `/health/ready`, `/health/live`.
-- Frontend: upload, parâmetros (Confidence, IoU), análise, resultados (Risk Score, detecções STRIDE em accordion com severidade e mitigação).
-- Treinamento YOLO via script (`notebooks/train_yolo.py`) para bases Roboflow e Kaggle; notebooks para testes.
-- Documentação e specs em `docs/specs/` (00-context, 10-requirements, 20-design, 30-features, 90-decisions, 99-meta).
+- Upload de diagrama (PNG, JPEG, WebP, GIF) via orquestrador (threat-modeling-api), com resposta imediata (201) e processamento em background.
+- Detecção de componentes e conexões via pipeline LLM vision (DiagramAgent) no threat-analyzer, com fallback multi-provider (Gemini → OpenAI → Ollama). DummyPipeline para testes sem LLM.
+- Análise STRIDE com RAG (base em knowledge-base) e pontuação DREAD (StrideAgent, DreadAgent).
+- Orquestrador: POST /api/v1/analyses (upload), GET /analyses, GET /analyses/{id}, GET /analyses/{id}/image, GET /analyses/{id}/logs, GET /notifications/unread, POST /notifications/{id}/read. Celery para processamento em background.
+- threat-analyzer: POST /api/v1/threat-model/analyze (imagem multipart) → JSON com components, connections, threats, risk_score, risk_level.
+- Health: /health, /health/ready, /health/live em ambos os serviços.
+- Frontend: upload assíncrono, listagem de análises, detalhe com polling e logs em tempo real, ícone de notificações, relatório STRIDE/DREAD em accordion.
+- Guardrail de validação de diagrama de arquitetura antes do pipeline completo.
+- Documentação e specs em docs/specs/ (estrutura Spec Driven).
 
 ## Escopo (out of scope para MVP)
 
-- Integração YOLO no backend (usar pipeline LLM ou Dummy).
+- Integração YOLO no backend (pipeline atual é 100% LLM; notebooks de treino preservados).
 - Chatbot com RAG (opcional para depois).
 - Exportação PDF (opcional).
 
 ## Requisitos de alto nível
 
 - Pipeline pluggável: DummyPipeline para testes; pipeline LLM (Diagram → STRIDE → DREAD) em produção.
-- RAG STRIDE: base em `docs/knowledge-base/`, TextLoader, ChromaDB.
-- API-first: frontend consome API; Postman em `docs/Postman Collections/`.
-- Frontend conforme spec (vídeo 1000088277.mp4, design dark/glassmorphism).
+- RAG STRIDE: base em knowledge-base (input_files → processamento Docling nos notebooks); ChromaDB no analyzer.
+- API-first: frontend consome apenas threat-modeling-api; Postman em docs/Postman Collections/.
+- Frontend conforme spec de UI/UX (design dark/glassmorphism, referência em 30-features).
 - Multi-LLM com fallback: Gemini → OpenAI → Ollama; validação e retry em caso de falha.

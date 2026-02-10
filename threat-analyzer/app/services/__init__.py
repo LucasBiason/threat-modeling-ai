@@ -1,0 +1,5 @@
+"""Application services — RAG, etc."""
+
+from app.services.rag_service import RAGService
+
+__all__ = ["RAGService"]

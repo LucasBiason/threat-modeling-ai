@@ -1,0 +1,15 @@
+# Local dev: pip install -e ../threat-modeling-shared && pip install -r requirements.txt
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv
+httpx
+sqlalchemy>=2.0
+psycopg2-binary
+alembic
+python-jose[cryptography]
+celery[redis]
+redis
+fastapi-pagination

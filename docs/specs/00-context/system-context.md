@@ -1,23 +1,35 @@
 # System Context — Threat Modeling AI
 
-## Onde estamos
+## Visão geral
 
-O **Threat Modeling AI** (Cloud Architecture Security Analyzer) é um sistema de análise de segurança automatizada em diagramas de arquitetura (AWS, Azure, etc.). O sistema identifica componentes no diagrama e gera análise de ameaças baseada em STRIDE com priorização DREAD.
+O **Threat Modeling AI** é um sistema de análise de ameaças automatizada em diagramas de arquitetura (cloud, AWS, Azure, etc.). O usuário envia uma imagem do diagrama; o sistema identifica componentes e conexões e gera análise STRIDE com priorização DREAD, entregando um relatório de vulnerabilidades e mitigações.
 
-## Componentes e integrações
+## Componentes do sistema
 
-- **Usuário:** Faz upload do diagrama e consulta o relatório de vulnerabilidades.
-- **Frontend:** Interface web (upload, parâmetros Confidence/IoU, análise, resultados STRIDE em accordion). Design: dark/glassmorphism, referência vídeo 1000088277.mp4.
-- **API (backend):** POST `/api/v1/threat-model/analyze` recebe diagrama; orquestra pipeline (Dummy ou DiagramAgent → StrideAgent → DreadAgent); retorna componentes, conexões, ameaças, scores DREAD.
-- **Pipeline:** Diagram → STRIDE → DREAD com LLM. `DummyPipeline` só quando `USE_DUMMY_PIPELINE=true` (testes unitários).
-- **DiagramAgent:** LLM vision para extrair componentes e conexões do diagrama (Gemini/OpenAI/Ollama com fallback).
-- **StrideAgent:** Análise STRIDE com RAG (base em `docs/knowledge-base/`), fallback multi-LLM.
-- **DreadAgent:** Pontuação DREAD das ameaças, fallback multi-LLM.
-- **RAG:** Base de conhecimento em `docs/knowledge-base/` (stride-threats, dread-scoring, guias visuais, UK Gov, Microsoft, OWASP). TextLoader + ChromaDB.
-- **YOLO:** Treino fora do backend via `notebooks/train_yolo.py`; pesos em `outputs/mvp_roboflow/` ou `outputs/mvp_kaggle/`. Integração híbrida (YOLO + fallback LLM) prevista para próxima etapa.
-- **Health:** `/health`, `/health/ready`, `/health/live`.
+| Componente                 | Responsabilidade                                                                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Usuário**                | Faz upload do diagrama, acompanha o processamento e consulta o relatório de ameaças.                                                                                                            |
+| **Frontend**               | Interface web: upload, listagem de análises, detalhe com polling, notificações e exibição do relatório STRIDE/DREAD.                                                                            |
+| **threat-modeling-api**    | Orquestrador: recebe upload (POST /api/v1/analyses), persiste análise e imagem, dispara processamento assíncrono via Celery, expõe listagem, detalhe, imagem, logs e notificações.              |
+| **threat-analyzer**        | Microserviço de análise: recebe imagem via HTTP (POST /api/v1/threat-model/analyze), executa pipeline LLM (Diagram → STRIDE → DREAD), retorna JSON com componentes, conexões, ameaças e scores. |
+| **Celery (worker + beat)** | Processamento em background: busca análises EM_ABERTO, chama o threat-analyzer, atualiza status e resultado, cria notificações.                                                                 |
+| **PostgreSQL**             | Persistência de análises, notificações e metadados.                                                                                                                                             |
+| **Redis**                  | Broker e backend do Celery.                                                                                                                                                                     |
 
 ## Atores externos
 
-- Usuário final (upload e consulta).
-- Provedores de LLM (Google Gemini, OpenAI, Ollama) quando pipeline LLM está ativo.
+- **Usuário final:** interage com o frontend (upload e consulta).
+- **Provedores de LLM:** Google Gemini, OpenAI, Ollama — utilizados pelo threat-analyzer quando o pipeline LLM está ativo.
+
+## Integrações
+
+- Frontend ↔ threat-modeling-api (REST).
+- threat-modeling-api ↔ threat-analyzer (HTTP, interno).
+- threat-modeling-api ↔ PostgreSQL e Redis.
+- threat-analyzer ↔ ChromaDB (RAG) e APIs de LLM (Gemini, OpenAI, Ollama).
+
+## O que está fora do escopo (contexto atual)
+
+- Integração YOLO no backend (pipeline atual é 100% LLM; treino YOLO permanece nos notebooks para uso futuro).
+- Chatbot com RAG (guardrails previstos para fase posterior).
+- Exportação PDF (opcional).

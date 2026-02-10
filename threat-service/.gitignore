@@ -1,0 +1,25 @@
+# Media and uploads (generated content)
+media/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Env and IDE
+.env
+.venv/
+venv/
+.idea/
+.vscode/
+
+# Tests and coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Misc
+*.log

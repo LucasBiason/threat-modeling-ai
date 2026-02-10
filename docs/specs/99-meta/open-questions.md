@@ -1,7 +1,11 @@
 # Open Questions — Threat Modeling AI
 
-| ID     | Pergunta | Status |
-|--------|----------|--------|
-| OQ-001 | Qual best.pt usar como padrão: Roboflow (`outputs/mvp_roboflow/`) ou Kaggle (`outputs/mvp_kaggle/`)? | Open |
-| OQ-002 | Qual limiar de confiança abaixo do qual disparar fallback LLM (quando YOLO integrado)? | Open |
-| OQ-003 | Escolha final: apenas OpenAI, ou Gemini+OpenAI em combo com fallback? | **Resolvido:** Gemini → OpenAI → Ollama (fallback sequencial) |
+Perguntas em aberto que impactam requisitos ou design. Atualizado conforme o projeto.
+
+| ID     | Pergunta                                                                                     | Status                                                      |
+| ------ | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| OQ-001 | Qual best.pt (Roboflow vs Kaggle) usar como padrão quando houver integração YOLO no backend? | Aberta (fora do escopo MVP)                                 |
+| OQ-002 | Limiar de confiança para eventual fallback LLM quando YOLO for integrado?                    | Aberta (fora do escopo MVP)                                 |
+| OQ-003 | Escolha de provedores LLM em produção (apenas OpenAI, ou Gemini+OpenAI+Ollama)?              | **Resolvido:** Fallback sequencial Gemini → OpenAI → Ollama |
+
+Quando uma pergunta for resolvida, atualizar status e registrar a decisão (ou ADR) na documentação.
