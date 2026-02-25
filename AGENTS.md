@@ -48,16 +48,16 @@ See per-service Makefiles for commands. From repo root with venv active:
 # Lint (Python)
 .venv/bin/ruff check threat-modeling-shared/ threat-analyzer/ threat-service/
 
-# Tests
+# Tests (all pass without external services)
 PYTHONPATH=threat-analyzer:threat-modeling-shared .venv/bin/python -m pytest threat-analyzer/tests/ -v --tb=short
-PYTHONPATH=threat-service:threat-modeling-shared .venv/bin/python -m pytest threat-service/tests/ -v --tb=short --ignore=threat-service/tests/test_main.py
+PYTHONPATH=threat-service:threat-modeling-shared .venv/bin/python -m pytest threat-service/tests/ --cov=threat-service/app --cov-report=term-missing -v --tb=short
 ```
 
-**Pre-existing test issues in threat-service:**
-- `tests/test_main.py`: imports `_db_check` which doesn't exist in `app.main` — skip with `--ignore`.
-- Several router tests fail with `AttributeError: 'module' object at app.main has no attribute 'get_db'`.
-- `test_analysis_processing_service.py`: some tests reference `httpx` attribute that no longer exists in the service module.
-- `test_config.py::test_settings_defaults`: expects `upload_dir == 'uploads'` but config now uses `'media'`.
+**threat-service test notes:**
+- All 135 tests pass without DB/Redis. 2 integration tests are auto-skipped when DB is unavailable.
+- 100% code coverage of `threat-service/app/`.
+- Tests use `unittest.mock` for all external dependencies (DB sessions, httpx, filesystem).
+- The `client_no_db` fixture in `conftest.py` patches engine to `None` and overrides `get_db` via `app.dependency_overrides`.
 
 ### Frontend lint
 
