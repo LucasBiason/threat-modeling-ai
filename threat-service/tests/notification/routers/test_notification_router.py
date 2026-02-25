@@ -4,7 +4,6 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi.testclient import TestClient
 
 from app.main import app
 from app.notification.controllers.notification_controller import NotificationController

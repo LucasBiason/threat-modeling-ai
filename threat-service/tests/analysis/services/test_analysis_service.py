@@ -42,7 +42,7 @@ class TestContentTypeForPath:
     def test_png(self):
         assert AnalysisService._content_type_for_path(Path("img.png")) == "image/png"
 
-    def test_PNG_uppercase(self):
+    def test_png_uppercase(self):
         assert AnalysisService._content_type_for_path(Path("img.PNG")) == "image/png"
 
     def test_webp(self):
@@ -74,9 +74,9 @@ class TestAnalyze:
         mock_client = MagicMock()
         mock_client.post.return_value = mock_response
 
-        with patch("app.analysis.services.analysis_service.httpx.Client") as MockClient:
-            MockClient.return_value.__enter__ = MagicMock(return_value=mock_client)
-            MockClient.return_value.__exit__ = MagicMock(return_value=False)
+        with patch("app.analysis.services.analysis_service.httpx.Client") as mock_client_cls:
+            mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+            mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
             result = svc.analyze(img, "diagram.png")
 
         assert result == {"threats": [], "risk_level": "Low"}
@@ -99,9 +99,9 @@ class TestAnalyze:
         mock_client = MagicMock()
         mock_client.post.return_value = mock_resp
 
-        with patch("app.analysis.services.analysis_service.httpx.Client") as MockClient:
-            MockClient.return_value.__enter__ = MagicMock(return_value=mock_client)
-            MockClient.return_value.__exit__ = MagicMock(return_value=False)
+        with patch("app.analysis.services.analysis_service.httpx.Client") as mock_client_cls:
+            mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+            mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
             with pytest.raises(AnalysisServiceError) as exc_info:
                 svc.analyze(img, "diagram.png")
 
@@ -116,9 +116,9 @@ class TestAnalyze:
         mock_client = MagicMock()
         mock_client.post.side_effect = OSError("Connection refused")
 
-        with patch("app.analysis.services.analysis_service.httpx.Client") as MockClient:
-            MockClient.return_value.__enter__ = MagicMock(return_value=mock_client)
-            MockClient.return_value.__exit__ = MagicMock(return_value=False)
+        with patch("app.analysis.services.analysis_service.httpx.Client") as mock_client_cls:
+            mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+            mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
             with pytest.raises(AnalysisServiceError) as exc_info:
                 svc.analyze(img, "diagram.png")
 

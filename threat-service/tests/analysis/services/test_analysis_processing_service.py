@@ -1,12 +1,10 @@
 """Unit tests for app.analysis.services.analysis_processing_service."""
 
 import uuid
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.analysis.models import Analysis, AnalysisStatus
 from app.analysis.services.analysis_processing_service import (
     AnalysisProcessingService,
     _append_log,
@@ -24,12 +22,10 @@ def mock_db():
 def service(mock_db):
     with patch(
         "app.analysis.services.analysis_processing_service.AnalysisRepository"
-    ) as MockRepo, patch(
+    ), patch(
         "app.analysis.services.analysis_processing_service.NotificationRepository"
-    ) as MockNotifRepo:
+    ):
         svc = AnalysisProcessingService(mock_db)
-        svc._mock_repo_cls = MockRepo
-        svc._mock_notif_repo_cls = MockNotifRepo
         yield svc
 
 
@@ -56,7 +52,7 @@ class TestHelpers:
         """_fail_analysis uses log_message when provided."""
         repo = MagicMock()
         aid = uuid.uuid4()
-        result = _fail_analysis(repo, aid, str(aid), "error", log_message="custom log")
+        _fail_analysis(repo, aid, str(aid), "error", log_message="custom log")
         repo.append_processing_log.assert_called_once_with(aid, "custom log")
 
 
@@ -133,10 +129,10 @@ class TestAnalysisProcessingService:
         analyzer_result = {"threats": [{"name": "t1"}], "risk_level": "Médio"}
         with patch(
             "app.analysis.services.analysis_processing_service.AnalysisService"
-        ) as MockAnalysisSvc:
+        ) as mock_analysis_svc:
             mock_svc_instance = MagicMock()
             mock_svc_instance.analyze.return_value = analyzer_result
-            MockAnalysisSvc.return_value = mock_svc_instance
+            mock_analysis_svc.return_value = mock_svc_instance
             result = service.process(aid)
 
         assert result["status"] == "ANALISADO"
@@ -162,10 +158,10 @@ class TestAnalysisProcessingService:
 
         with patch(
             "app.analysis.services.analysis_processing_service.AnalysisService"
-        ) as MockAnalysisSvc:
+        ) as mock_analysis_svc:
             mock_svc_instance = MagicMock()
             mock_svc_instance.analyze.return_value = {"threats": [], "risk_level": "Low"}
-            MockAnalysisSvc.return_value = mock_svc_instance
+            mock_analysis_svc.return_value = mock_svc_instance
             service.process(aid)
 
         service._analysis_repo.mark_processing.assert_called_once()
@@ -187,10 +183,10 @@ class TestAnalysisProcessingService:
 
         with patch(
             "app.analysis.services.analysis_processing_service.AnalysisService"
-        ) as MockAnalysisSvc:
+        ) as mock_analysis_svc:
             mock_svc_instance = MagicMock()
             mock_svc_instance.analyze.return_value = {"threats": [], "risk_level": "Low"}
-            MockAnalysisSvc.return_value = mock_svc_instance
+            mock_analysis_svc.return_value = mock_svc_instance
             service.process(aid)
 
         service._analysis_repo.mark_processing.assert_not_called()
@@ -211,10 +207,10 @@ class TestAnalysisProcessingService:
 
         with patch(
             "app.analysis.services.analysis_processing_service.AnalysisService"
-        ) as MockAnalysisSvc:
+        ) as mock_analysis_svc:
             mock_svc_instance = MagicMock()
             mock_svc_instance.analyze.side_effect = AnalysisServiceError("HTTP 500")
-            MockAnalysisSvc.return_value = mock_svc_instance
+            mock_analysis_svc.return_value = mock_svc_instance
             result = service.process(aid)
 
         assert "error" in result
@@ -237,13 +233,13 @@ class TestAnalysisProcessingService:
 
         with patch(
             "app.analysis.services.analysis_processing_service.AnalysisService"
-        ) as MockAnalysisSvc:
+        ) as mock_analysis_svc:
             mock_svc_instance = MagicMock()
             mock_svc_instance.analyze.return_value = {
                 "threats": [{"a": 1}, {"b": 2}],
                 "risk_level": "Alto",
             }
-            MockAnalysisSvc.return_value = mock_svc_instance
+            mock_analysis_svc.return_value = mock_svc_instance
             result = service.process(aid)
 
         call_args = service._notification_repo.create.call_args
