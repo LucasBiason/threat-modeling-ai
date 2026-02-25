@@ -23,6 +23,30 @@ class TestScanPendingAnalyses:
                 result = scan_pending_analyses()
         assert result is None
 
+    def test_scan_pending_triggers_process_when_found(self):
+        """Marks processing and triggers process_analysis when pending found."""
+        aid = uuid.uuid4()
+        analysis = MagicMock()
+        analysis.id = aid
+
+        with patch("app.analysis.tasks.analysis_tasks.SessionLocal") as mock_session:
+            db = MagicMock()
+            mock_session.return_value = db
+            with patch(
+                "app.analysis.tasks.analysis_tasks.AnalysisRepository"
+            ) as mock_repo_cls:
+                repo = MagicMock()
+                repo.get_pending.return_value = analysis
+                mock_repo_cls.return_value = repo
+                with patch(
+                    "app.analysis.tasks.analysis_tasks.process_analysis"
+                ) as mock_process:
+                    result = scan_pending_analyses()
+
+        assert result == str(aid)
+        repo.mark_processing.assert_called_once()
+        mock_process.delay.assert_called_once_with(str(aid))
+
 
 class TestProcessAnalysis:
     """Tests for process_analysis task (delegates to AnalysisProcessingService)."""
@@ -64,3 +88,25 @@ class TestProcessAnalysis:
                 mock_svc_cls.return_value = mock_svc
                 result = process_analysis(aid)
         assert "skipped" in result
+
+    def test_process_analysis_success(self):
+        """Returns success result from service."""
+        aid = str(uuid.uuid4())
+        with patch("app.analysis.tasks.analysis_tasks.SessionLocal") as mock_session:
+            db = MagicMock()
+            mock_session.return_value = db
+            with patch(
+                "app.analysis.tasks.analysis_tasks.AnalysisProcessingService"
+            ) as mock_svc_cls:
+                mock_svc = MagicMock()
+                mock_svc.process.return_value = {
+                    "analysis_id": aid,
+                    "status": "ANALISADO",
+                    "threat_count": 3,
+                    "risk_level": "High",
+                }
+                mock_svc_cls.return_value = mock_svc
+                result = process_analysis(aid)
+        assert result["status"] == "ANALISADO"
+        assert result["threat_count"] == 3
+        db.close.assert_called_once()

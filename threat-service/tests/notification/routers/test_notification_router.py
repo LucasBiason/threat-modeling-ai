@@ -31,6 +31,18 @@ def client_notif_mocked(mock_notif_controller, client_no_db):
         app.dependency_overrides.pop(get_controller, None)
 
 
+class TestGetController:
+    """Tests for the get_controller factory function."""
+
+    def test_get_controller_returns_notification_controller(self):
+        """get_controller returns a NotificationController instance."""
+        from unittest.mock import MagicMock
+
+        mock_db = MagicMock()
+        ctrl = get_controller(mock_db)
+        assert isinstance(ctrl, NotificationController)
+
+
 class TestNotificationRouterUnit:
     """Unit tests with mocked controller."""
 

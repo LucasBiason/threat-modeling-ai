@@ -22,12 +22,12 @@ from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 
 # Use test database URL; defaults to same as dev with _test suffix
-# For CI: set TEST_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/threat_modeling_test
-# Requires PostgreSQL running (make run) or createdb threat_modeling_test
 settings = get_settings()
+_db_url = settings.database_url or ""
+_db_name = _db_url.rsplit("/", 1)[-1] if "/" in _db_url else ""
 TEST_DB_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    settings.database_url.replace("/threat_modeling", "/threat_modeling_test"),
+    _db_url.replace(f"/{_db_name}", f"/{_db_name}_test") if _db_name else _db_url,
 )
 
 # Temp dir for uploads in tests (avoid polluting project)
@@ -44,7 +44,7 @@ def engine():
     except OperationalError as e:
         pytest.skip(
             f"PostgreSQL not available: {e}. "
-            "Run 'make run' or 'createdb threat_modeling_test' and set TEST_DATABASE_URL."
+            "Run 'make run' or 'createdb [REDACTED]_test' and set TEST_DATABASE_URL."
         )
 
 
@@ -97,22 +97,17 @@ def sample_png_bytes():
 
 
 @pytest.fixture
-def client_no_db(monkeypatch):
-    """Test client without PostgreSQL (mocks engine/get_db for router unit tests)."""
-    from unittest.mock import MagicMock
+def client_no_db():
+    """Test client without DB — overrides get_db and patches engine to skip lifespan DB calls."""  # pragma: allowlist secret
+    from unittest.mock import MagicMock, patch
 
-    mock_engine = MagicMock()
     mock_db = MagicMock()
 
-    def mock_get_db():
-        try:
-            yield mock_db
-        finally:
-            pass
+    def override():
+        yield mock_db
 
-    monkeypatch.setattr("app.main.engine", mock_engine)
-    monkeypatch.setattr("app.database.engine", mock_engine)
-    monkeypatch.setattr("app.main.get_db", mock_get_db)
-    monkeypatch.setattr("app.database.get_db", mock_get_db)
-    with TestClient(app) as c:
-        yield c
+    app.dependency_overrides[get_db] = override
+    with patch("app.main.engine", None):
+        with TestClient(app) as c:
+            yield c
+    app.dependency_overrides.clear()

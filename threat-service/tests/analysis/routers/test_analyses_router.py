@@ -45,6 +45,18 @@ def client_mocked(mock_controller, client_no_db):
         app.dependency_overrides.pop(get_controller, None)
 
 
+class TestGetController:
+    """Tests for the get_controller factory function."""
+
+    def test_get_controller_returns_analysis_controller(self):
+        """get_controller returns an AnalysisController instance."""
+        from unittest.mock import MagicMock
+
+        mock_db = MagicMock()
+        ctrl = get_controller(mock_db)
+        assert isinstance(ctrl, AnalysisController)
+
+
 class TestAnalysesRouterUnit:
     """Unit tests with mocked controller (no PostgreSQL)."""
 

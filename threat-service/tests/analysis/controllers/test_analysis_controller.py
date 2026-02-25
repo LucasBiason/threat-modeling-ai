@@ -146,6 +146,26 @@ class TestAnalysisControllerGetAnalysis:
                 controller.get_analysis_or_404(uuid.uuid4())
         assert exc_info.value.status_code == 404
 
+    def test_get_analysis_or_404_returns_detail(self, controller):
+        """get_analysis_or_404 returns detail when analysis exists."""
+        aid = uuid.uuid4()
+        a = Analysis(
+            id=aid,
+            code="TMA-999",
+            image_path="img.png",
+            status=AnalysisStatus.EM_ABERTO,
+            created_at=datetime.now(timezone.utc),
+            started_at=None,
+            finished_at=None,
+            result=None,
+            processing_logs=None,
+            error_message=None,
+        )
+        with patch.object(controller._repository, "get_by_id", return_value=a):
+            result = controller.get_analysis_or_404(aid)
+        assert result is not None
+        assert result.code == "TMA-999"
+
 
 class TestAnalysisControllerImageAndLogs:
     """Tests for get_image_path and get_processing_logs."""
