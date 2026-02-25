@@ -92,6 +92,27 @@ def test_analyze_with_retriever_uses_rag_context():
     mock_retriever.get_relevant_documents.assert_called_once()
 
 
+def test_analyze_rag_retrieval_failure_continues():
+    """When RAG retriever raises, analysis should still proceed without context."""
+    diagram_data = {"components": [], "connections": [], "boundaries": []}
+    mock_retriever = MagicMock()
+    mock_retriever.get_relevant_documents.side_effect = RuntimeError("RAG failed")
+    with (
+        patch("app.threat_analysis.agents.stride.agent.LLMCacheService"),
+        patch("app.threat_analysis.agents.stride.agent.RAGService") as mock_rag,
+        patch(
+            "app.threat_analysis.agents.stride.agent.run_text_with_fallback",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_fallback,
+    ):
+        mock_rag.return_value.get_retriever.return_value = mock_retriever
+        agent = StrideAgent(get_settings())
+        result = asyncio.run(agent.analyze(diagram_data))
+    assert result == []
+    mock_fallback.assert_called_once()
+
+
 def test_format_components():
     with (
         patch("app.threat_analysis.agents.stride.agent.LLMCacheService"),

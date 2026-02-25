@@ -50,6 +50,15 @@ class MockConnection(LLMConnection):
         return self._result
 
 
+class TestValidationCheck:
+    def test_validation_fail_non_dict_result(self):
+        from app.threat_analysis.llm.fallback import _validation_check
+        ok, value = _validation_check(lambda r: False, "not a dict", "TestEngine")
+        assert ok is False
+        assert "Validation failed" in value["error"]
+        assert value["engine"] == "TestEngine"
+
+
 class TestRunVisionWithFallback:
     def test_cache_hit(self):
         cached = {"components": [{"id": "1"}]}
@@ -102,6 +111,43 @@ class TestRunVisionWithFallback:
         assert "All LLM providers failed" in result["error"]
         assert "engine_errors" in result
 
+    def test_vision_exception_handling(self):
+        class MockExc(MockConnection):
+            def __init__(self, s):
+                super().__init__(s, raise_err=RuntimeError("network error"))
+
+        result = asyncio.run(
+            run_vision_with_fallback(
+                connections=[MockExc],
+                settings=MagicMock(),
+                prompt="p",
+                image_bytes=b"x",
+            )
+        )
+        assert "error" in result
+        assert "engine_errors" in result
+        assert result["engine_errors"][0]["error_type"] == "exception"
+
+    def test_vision_success_calls_cache_set(self):
+        valid = {"components": [{"id": "1"}]}
+        cache_set = MagicMock()
+
+        class MockOk(MockConnection):
+            def __init__(self, s):
+                super().__init__(s, result=valid)
+
+        result = asyncio.run(
+            run_vision_with_fallback(
+                connections=[MockOk],
+                settings=MagicMock(),
+                prompt="p",
+                image_bytes=b"x",
+                cache_set=cache_set,
+            )
+        )
+        assert result == valid
+        cache_set.assert_called_once()
+
 
 class TestRunTextWithFallback:
     def test_cache_hit(self):
@@ -152,3 +198,38 @@ class TestRunTextWithFallback:
         assert "error" in result
         assert "All LLM providers failed" in result["error"]
         assert "engine_errors" in result
+
+    def test_text_exception_handling(self):
+        class MockExc(MockConnection):
+            def __init__(self, s):
+                super().__init__(s, raise_err=RuntimeError("timeout"))
+
+        result = asyncio.run(
+            run_text_with_fallback(
+                connections=[MockExc],
+                settings=MagicMock(),
+                messages=[{"role": "user", "content": "x"}],
+            )
+        )
+        assert "error" in result
+        assert "engine_errors" in result
+        assert result["engine_errors"][0]["error_type"] == "exception"
+
+    def test_text_success_calls_cache_set(self):
+        valid = [{"threat_type": "Spoofing"}]
+        cache_set = MagicMock()
+
+        class MockOk(MockConnection):
+            def __init__(self, s):
+                super().__init__(s, result=valid)
+
+        result = asyncio.run(
+            run_text_with_fallback(
+                connections=[MockOk],
+                settings=MagicMock(),
+                messages=[{"role": "user", "content": "analyze"}],
+                cache_set=cache_set,
+            )
+        )
+        assert result == valid
+        cache_set.assert_called_once()
